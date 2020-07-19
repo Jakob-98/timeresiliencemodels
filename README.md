@@ -28,10 +28,55 @@ def get_loads(): #pre-formating for easier use
     return load
 ```
 
-additionally, The pickle libarary is used to save and load load in the Pickle directory, since certain calculations can take a long time.
+Additionally, The pickle libarary is used to save and load load in the Pickle directory, since certain calculations can take a long time.
 
+After estimating capacity based on 
 
+```python
+def create_shortest_paths(graph, OD):
+    """
+    Calculate shortest paths for each O-D pair in the OD matrix, where possible. 
+    """
+    paths = {}
+    for od_id, od in OD.iterrows():
+        origin = od['Origin Station Name']
+        destination = od['Destination Station Name']
+        try:             
+            path = nx.shortest_path(graph, origin, destination, weight='time') 
+        except nx.NetworkXNoPath: 
+            path = []
+        except nx.NodeNotFound:
+            path = []
+        paths.update({(origin, destination): path})
+    return paths
+```
 
+``` python
+def update_shortest_paths(basegraph, removed_edge, baseshortest):
+    tempgraph = copy.deepcopy(basegraph) #prevent changes to original copy of graph
+    tempgraph.remove_edge(removed_edge[0], removed_edge[1])
+    newshort = copy.deepcopy(baseshortest) #new shortest paths dict
+    """
+    First, we check if the removed edge is in any of the paths in the base shortest path dict.
+    If it is, we then re-calculate the shortest path using the new topology. This is not
+    always possible, in which case an empty path is saved for the origin-destination pair. 
+    """
+    for key in newshort:
+        path = newshort.get(key)
+        for i in range(len(path)-1): #if the removed edge pair is in the shortest path, recalculate it. 
+            if (([removed_edge[1], removed_edge[0]] == path[i:i+2]) 
+                or [removed_edge[0], removed_edge[1]] == path[i:i+2]):
+                try:
+                    newpath = nx.shortest_path(tempgraph, key[0], key[1], weight='time')
+                except nx.NetworkXNoPath: 
+                    newpath = []
+                    print('no new path found')
+                except nx.NodeNotFound:
+                    newpath = []
+                    print('node not found')
+                newshort.update({key: newpath})
+    return newshort
+```
 
 
 ## Modelling

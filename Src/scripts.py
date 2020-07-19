@@ -2,6 +2,7 @@ import pandas as pd
 import networkx as nx
 import copy
 import fileloader as fl
+import sys
 
 #predefined timeslots from OD Matrix
 timeslots = ['Morning (0500-0700)',
@@ -25,26 +26,38 @@ def create_base_graphs(basegraph, frequency):
     
     return graphs
 
-def n1_analysis(graphs, od, shortest_paths, redge):
-    tempgraphs = copy.deepcopy(graphs) #create deepcopy to prevent container issues
-    passengers = {} # how many passengers added in the analyis, and disconnected from the network
-    print(redge)
-    for timeslot in timeslots: 
-        tempgraph = tempgraphs.get(timeslot)
-        tempgraph = add_passengers_time(tempgraph, od, timeslot, shortest_paths)
 
-        tempgraphs.update({timeslot : tempgraph[0]})
-        passengers.update({timeslot : tempgraph[1]})
-    return tempgraphs, passengers
+def create_shortest_paths(graph, OD):
+    """
+    Calculate shortest paths for each O-D pair in the OD matrix, where possible. 
+    """
+    paths = {}
+    for od_id, od in OD.iterrows():
+        origin = od['Origin Station Name']
+        destination = od['Destination Station Name']
+        try:             
+            path = nx.shortest_path(graph, origin, destination, weight='time') 
+        except nx.NetworkXNoPath: 
+            path = []
+        except nx.NodeNotFound:
+            path = []
+        paths.update({(origin, destination): path})
+    return paths
 
 def update_shortest_paths(basegraph, removed_edge, baseshortest):
     tempgraph = copy.deepcopy(basegraph) #prevent changes to original copy of graph
     tempgraph.remove_edge(removed_edge[0], removed_edge[1])
     newshort = copy.deepcopy(baseshortest) #new shortest paths dict
+    """
+    First, we check if the removed edge is in any of the paths in the base shortest path dict.
+    If it is, we then re-calculate the shortest path using the new topology. This is not
+    always possible, in which case an empty path is saved for the origin-destination pair. 
+    """
     for key in newshort:
         path = newshort.get(key)
         for i in range(len(path)-1): #if the removed edge pair is in the shortest path, recalculate it. 
-            if ([removed_edge[1], removed_edge[0]] == path[i:i+2]) or [removed_edge[0],removed_edge[1]] == path[i:i+2]:
+            if (([removed_edge[1], removed_edge[0]] == path[i:i+2]) 
+                or [removed_edge[0], removed_edge[1]] == path[i:i+2]):
                 try:
                     newpath = nx.shortest_path(tempgraph, key[0], key[1], weight='time')
                 except nx.NetworkXNoPath: 
@@ -55,24 +68,6 @@ def update_shortest_paths(basegraph, removed_edge, baseshortest):
                     print('node not found')
                 newshort.update({key: newpath})
     return newshort
-            
-def create_shortest_paths(graph, OD):
-    paths = {}
-    for od_id, od in OD.iterrows():
-        origin = od['Origin Station Name']
-        destination = od['Destination Station Name']
-        try: #todo improve trip estimates
-            
-            path = nx.shortest_path(graph, origin, destination, weight='time')
-            
-        except nx.NetworkXNoPath: 
-            print(origin, destination)
-            path = []
-        except nx.NodeNotFound:
-            print('node', origin, destination)
-            path = []
-        paths.update({(origin, destination): path})
-    return paths
 
 
 
@@ -114,7 +109,19 @@ def add_passengers_time(pgraph, OD, timeslot, paths): # adding estimates of pass
     print('Added passengers for timeslot: {}, total rows: {}'.format(timeslot, len(OD)))
     return (pgraph, {'passadd':passengersAdded, 'passnotadd':passengersNotAdded})
 
-    
+def n1_analysis(graphs, od, shortest_paths, redge):
+    tempgraphs = copy.deepcopy(graphs) #create deepcopy to prevent container issues
+    passengers = {} # how many passengers added in the analyis, and disconnected from the network
+    print(redge)
+    for timeslot in timeslots: 
+        tempgraph = tempgraphs.get(timeslot)
+        tempgraph = add_passengers_time(tempgraph, od, timeslot, shortest_paths)
+
+        tempgraphs.update({timeslot : tempgraph[0]})
+        passengers.update({timeslot : tempgraph[1]})
+    return tempgraphs, passengers
+
+
 def add_capacity(graph, frequency, timeslot):
     timetable = { #very ugly table, but it gets the job done
     'Morning (0500-0700)':["0500-0515", '0515-0530', "0530-0545", '0545-0600', '0600-0615', 
@@ -162,7 +169,8 @@ def add_capacity(graph, frequency, timeslot):
     for edge in graph.edges():
         sumfrequency =  0
         for time in timetable.get(timeslot): #sum the frequencies for all the times in the specific timeslot
-            sumfrequency += frequency.loc[(frequency['From Station (Name)'] == edge[0]) & (frequency['To Station (Name)'] == edge[1])][time]
+            sumfrequency += (frequency.loc[(frequency['From Station (Name)'] == edge[0]) 
+                & (frequency['To Station (Name)'] == edge[1])][time])
 
         avg = lambda x : 0 if x is None or not len(x) else int(sum(x)/len(x)) #sometimes 2 values are found, taking average if possible
         sumfrequency = avg(sumfrequency) 
