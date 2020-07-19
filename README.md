@@ -80,7 +80,33 @@ def update_shortest_paths(basegraph, removed_edge, baseshortest):
     return newshort
 ```
 
-This form of trip assignment is an all-or-nothing approach similar to prior research [(Gautheir et al., 2018)](https://journals.sagepub.com/doi/abs/10.1177/0361198118792115?journalCode=trra). An alternative form of trip assignment was considered.
+This form of trip assignment is an all-or-nothing approach similar to prior research [(Gautheir et al., 2018)](https://journals.sagepub.com/doi/abs/10.1177/0361198118792115?journalCode=trra). An alternative form of trip assignment was considered, but was quite computationaly heavy. In this case, an exponential disribution was used in order to assign passengers to n shortest possible paths between their origin and destination: 
+
+```python
+def nshortestpaths(graph, origin, destination, npath=3):
+    #First, create a generator item for n shortest paths
+    pathgen = nx.shortest_simple_paths(graph, source=origin, target=destination, weight='time') 
+    #Next, return the n shortest paths in a list
+    return [next(pathgen) for i in range(npath) if next(pathgen) is not None] 
+```
+Next, the trip assignment was changed in order to distribute the passengers over the shortest paths: 
+
+```python
+def trip_assigment(graph, paths, passengers):
+    npaths = len(paths)
+
+    e = 2.5 #exponential distribution to follow
+    #create exponential distribution to assign passengers to:
+    dist = [e**i/(sum([e**j for j in range(npaths)])) for i in range(npaths)][::-1] 
+    for i in range(npaths):
+        path = paths[i]
+        npass = int(dist[i] * passengers)
+        for i in range(len(path)-1): 
+            graph[path[i]][path[i+1]]['passengers'] += npass #adding passengers
+            graph[path[i]][path[i+1]]['traveltime'] += npass * int(graph[path[i]][path[i+1]]['time']) 
+
+    return graph
+```
 
 ## Modelling
 In certain (late) timeslots, due to very low train frequency, capacity is at 0. This skews results, therefore we iteratively take the average capacity of neighbouring links which sligtly increases average capacity, but allows for better analysis of results: 
