@@ -7,12 +7,12 @@ This repo is used to showcase the methodology used in my thesis "Assessing time 
 The thesis can be found here ## todo add
 
 ## Table of Contents
-- [Data and structure](#data and structure)
+- [Data](#data)
 - [Requirements](#requirements)
-- [Preprocessing and scripts](#preprocessing and scripts)
+- [Scripts](#Scripts)
 - [Modelling](#modelling)
-- [Processing results](#processing results)
-- [closing words](#closing words)
+- [Results](#Results)
+- [Closing](#closing)
 
 ## Data and structure
 
@@ -32,7 +32,7 @@ Additionally, The pickle libarary is used to save and load load in the Pickle di
 
 After estimating capacity based on 
 
-```python
+```python 
 def create_shortest_paths(graph, OD):
     """
     Calculate shortest paths for each O-D pair in the OD matrix, where possible. 
