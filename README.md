@@ -1,5 +1,5 @@
 >TODOS
-> add images
+[!](media/disruption_events.png)
 > add heathrow airport 5 to csv
 # Proposing a repoducible method of creating time resilience models in Python using NetworkX
 This repo is used to showcase the methodology used in my thesis "Assessing time resilience of public transit networks using London Underground data". The motivation behind this study was to explore the importance of disruption time in public transport network resilience, and how to measure the changing impact over time. Here you can find a methodology to model a non-cascading time-dependent network model, estimating changing passenger loads in a public transport network. 
@@ -14,9 +14,9 @@ The thesis can be found here ## todo add
 - [Results](#Results)
 - [Closing](#closing)
 
-## Data and structure
+## Data
 
-## Preprocessing and scripts
+## Scripts
 In fileloader.py, logic is written to quickly load and pre-format the xlsx files from the TFL London Data. 
 For example: 
 ```python
@@ -30,7 +30,7 @@ def get_loads(): #pre-formating for easier use
 
 Additionally, The pickle libarary is used to save and load load in the Pickle directory, since certain calculations can take a long time.
 
-After estimating capacity based on 
+Passengers traveling through the network model are assigned the links between their origin-destination according to the shortest path between those nodes, weighed on 'time'. NetworkX's built in shortest path algorithm (Dijkstra) is used: 
 
 ```python 
 def create_shortest_paths(graph, OD):
@@ -50,6 +50,8 @@ def create_shortest_paths(graph, OD):
         paths.update({(origin, destination): path})
     return paths
 ```
+
+When disrupting (effectively removing) a link, the shortest path needs to be updated according to the new network topology: 
 
 ``` python
 def update_shortest_paths(basegraph, removed_edge, baseshortest):
@@ -78,6 +80,7 @@ def update_shortest_paths(basegraph, removed_edge, baseshortest):
     return newshort
 ```
 
+This form of trip assignment is an all-or-nothing approach similar to prior research [(Gautheir et al., 2018)](https://journals.sagepub.com/doi/abs/10.1177/0361198118792115?journalCode=trra). An alternative form of trip assignment was considered.
 
 ## Modelling
 In certain (late) timeslots, due to very low train frequency, capacity is at 0. This skews results, therefore we iteratively take the average capacity of neighbouring links which sligtly increases average capacity, but allows for better analysis of results: 
@@ -107,3 +110,4 @@ def fixCapacity(bgraph, depth):
         fixCapacity(bgraph, depth)
     return
 ```
+
