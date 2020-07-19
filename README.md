@@ -1,11 +1,10 @@
-# Proposing a repoducible method of creating time resilience models in Python using NetworkX
+# Proposing a repoducible method of creating time resilience models in Python using NetworkX and London Underground data
 This repo is used to showcase the methodology used in my thesis "Assessing time resilience of public transit networks using London Underground data". The motivation behind this study was to explore the importance of disruption time in public transport network resilience, and how to measure the changing impact over time. Here you can find a methodology to model a non-cascading time-dependent network model, estimating changing passenger loads in a public transport network. 
 
-![test](Media/disruption events.png)
-> Changing impact of disruption events on capacity utilization for different timeslots
 
 # TODO
-> add heathrow airport 5 to csv
+![test](Media/disruption%20events.png)
+> Changing impact of disruption events on capacity utilization for different timeslots
 
 ## Thesis link and abstract
 The thesis can be found here ## todo add
