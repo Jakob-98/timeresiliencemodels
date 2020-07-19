@@ -2,13 +2,19 @@
 This repo is used to showcase the methodology used in my thesis "Assessing time resilience of public transit networks using London Underground data". The motivation behind this study was to explore the importance of disruption time in public transport network resilience, and how to measure the changing impact over time. Here you can find a methodology to model a non-cascading time-dependent network model, estimating changing passenger loads in a public transport network. 
 
 ![test](Media/disruption events.png)
+> Changing impact of disruption events on capacity utilization for different timeslots
+
+# TODO
 > add heathrow airport 5 to csv
 
+## Thesis link and abstract
 The thesis can be found here ## todo add
+
+### abstract
+The motivation behind this study is to explore the importance of disruption time in public transport network resilience, and how to measure the changing impact over time. We have proposed a methodology to create a non-cascading time-dependent network model, estimating changing passenger loads in a public transport network. Our models, created using empirical passenger data from the London Underground, show that the network is not only most vulnerable during peak-hours to increased passenger loads, but in addition, the impact disruptions on the network change and the highest during peak-hours at certain locations. One of the goals of this research was to explore the topological metrics which identify time-dependent critical network links. In this study, betweenness has shown to be a valuable indicator of link criticality using our model approach. Considering capacity utilization as an important performance metric, disruptions of high-impact non-bridge links showed a small decrease in capacity utilization in preceding and succeeding links and a more significant increase in capacity utilization for parallel links. This parallel effect was less significant in terms of capacity utilization for non-bridge links which have a low betweenness centrality, instead effecting the capacity utilization of neighboring links in a more diffuse manner. Finally, we expected to see a spatial change in the effect of disruption events over time, but the analysis of our model results did not reflect this expectation. The results primed exciting directions for future research, and has given us valuable initial insights on time dependency of public transport resilience.  
 
 ## Table of Contents
 - [Data](#data)
-- [Requirements](#requirements)
 - [Scripts](#Scripts)
 - [Modelling](#modelling)
 - [Results](#Results)
@@ -79,6 +85,45 @@ def update_shortest_paths(basegraph, removed_edge, baseshortest):
                 newshort.update({key: newpath})
     return newshort
 ```
+Arguably the most important function - adding passenger load and travel times, is shown below. It is fairly straightforward, as it iterates through the od-matrix to grab the passengers required to be added per origin-destination pair, after which it iterates through the respective links of the shortest path from that o-d pair. 
+```python
+def add_passengers_time(pgraph, OD, timeslot, paths): 
+    """Adds estimates of passenger loads to a graph using origin-destination pairs and their respective shortest paths
+
+    Keyword arguments:
+    pgraph -- the graph to add passenger and traveltime attribute to
+    OD -- London Underground OD matrix from TFL 
+    timeslot - timeslot from OD matrix columns
+    paths - shortest path - precaculated to improve performance
+    """
+    nx.set_edge_attributes(pgraph, 0, 'passengers')
+    nx.set_edge_attributes(pgraph, 0, 'traveltime')
+    nx.set_edge_attributes(pgraph, timeslot, 'timeslot')
+    passengersAdded = 0
+    passengersNotAdded = 0
+    for od_id, od in OD.iterrows():
+        origin = od['Origin Station Name']
+        destination = od['Destination Station Name']
+        passengers = int(od[timeslot])
+        if paths.get((origin, destination)) is not None: #is there a shortest path to be found?
+            path = paths.get((origin, destination))
+        else: #if not, continue (no passengers can be added)
+            passengersNotAdded += passengers
+            print(origin, destination)
+            continue
+        
+        if len(path) == 0:  #an empty path array indicates that no shortest path was found, and passengers can't be added
+            print(origin, destination, passengers)
+            passengersNotAdded += passengers
+            continue
+        passengersAdded += passengers
+        for i in range(len(path)-1): 
+            pgraph[path[i]][path[i+1]]['passengers'] += passengers #adding passengers
+            pgraph[path[i]][path[i+1]]['traveltime'] += passengers * int(pgraph[path[i]][path[i+1]]['time']) #adding total travel time
+            
+    print('Added passengers for timeslot: {}, total rows: {}'.format(timeslot, len(OD)))
+    return (pgraph, {'passadd':passengersAdded, 'passnotadd':passengersNotAdded})
+```
 
 This form of trip assignment is an all-or-nothing approach similar to prior research [(Gautheir et al., 2018)](https://journals.sagepub.com/doi/abs/10.1177/0361198118792115?journalCode=trra). An alternative form of trip assignment was considered, but was quite computationaly heavy. In this case, an exponential disribution was used in order to assign passengers to n shortest possible paths between their origin and destination: 
 
@@ -136,4 +181,37 @@ def fixCapacity(bgraph, depth):
         fixCapacity(bgraph, depth)
     return
 ```
+
+In the file 01- intial pickled models, the shortest paths are calculated and trip assignment is performed. In my actual research, I ended up uploading part of the code to AWS in order to let it run overnight, as the calculations were quite heavy. The code run on AWS is as follows: 
+
+```python
+import os.path
+from os import path
+import networkx as nx
+import scripts2 as scr
+import fileloader as fl
+import dataframes as df
+import time
+
+graph = fl.get_network()
+basegraphs = fl.load_obj('basegraphs')
+od = fl.get_OD_LU()
+for edge in graph.edges():
+    starttime = time.time()
+    edge = list(graph.edges())[i]
+    name = ",".join(edge)
+    if path.exists('Pickles/test/'+ name + '.pickle'): continue #if I already created this file, skip 
+    tempshortest = fl.load_obj(name, 'shortest/')
+    tempgraphs, passengers = scr.n1_analysis(basegraphs, od, tempshortest, edge)
+    fl.save_obj(tempgraphs, name, 'awsgraphs/')
+    fl.save_obj(passengers, name, 'passengers/')
+    print('added for edge: {}, time taken {}'.format(name, starttime-time.time()))
+```
+
+## Analysis
+### This section is TODO. 
+
+## Results
+### This section is TODO. 
+
 

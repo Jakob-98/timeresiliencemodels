@@ -71,21 +71,20 @@ def update_shortest_paths(basegraph, removed_edge, baseshortest):
 
 
 
-def add_passengers_time(pgraph, OD, timeslot, paths): # adding estimates of passengers going through certain links in the network using the OD matrix, per specific timeslot
-    """Adds estimates of passengers going through links in the network using OD matrix and timeslot
+def add_passengers_time(pgraph, OD, timeslot, paths): 
+    """Adds estimates of passenger loads to a graph using origin-destination pairs and their respective shortest paths
 
     Keyword arguments:
-    pgraph -- the graph to add passenger attribute to
-    OD -- OD matrix from TFL
+    pgraph -- the graph to add passenger and traveltime attribute to
+    OD -- London Underground OD matrix from TFL 
     timeslot - timeslot from OD matrix columns
-    paths - shortest path - precalced to improve performance
+    paths - shortest path - precaculated to improve performance
     """
     nx.set_edge_attributes(pgraph, 0, 'passengers')
     nx.set_edge_attributes(pgraph, 0, 'traveltime')
     nx.set_edge_attributes(pgraph, timeslot, 'timeslot')
     passengersAdded = 0
     passengersNotAdded = 0
-    notfound = set()
     for od_id, od in OD.iterrows():
         origin = od['Origin Station Name']
         destination = od['Destination Station Name']
