@@ -25,16 +25,16 @@ def get_network():
     lines = pd.read_csv(r'../data/londongraphs/processed/london.lines.csv', index_col='line')
     stations = pd.read_csv(r'../data/londongraphs/processed/london.stations.csv')
     connections = pd.read_csv(r'../data/londongraphs/processed/london.connections.csv')
-
     graph = nx.Graph()
-
     for station_id, station in stations.iterrows():
-        graph.add_node(station['name'], lon=round(station['longitude'],4), lat=round(station['latitude'],4), s_id=station['id'])
+        graph.add_node(station['name'], lon=round(station['longitude'],4), 
+            lat=round(station['latitude'],4), s_id=station['id'])
 
     for connection_id, connection in connections.iterrows():
         station1_name = stations.loc[stations['id'] == connection['station1'],'name'].item()
         station2_name = stations.loc[stations['id'] == connection['station2'],'name'].item()
-        graph.add_edge(station1_name, station2_name, time = connection['time'], line = lines.loc[connection['line'], 'name'])
+        graph.add_edge(station1_name, station2_name, time = connection['time'], 
+            line = lines.loc[connection['line'], 'name'])
         
     return graph
 

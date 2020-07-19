@@ -33,9 +33,30 @@ def get_loads(): #pre-formating for easier use
     return load
 ```
 
-Additionally, The pickle libarary is used to save and load load in the Pickle directory, since certain calculations can take a long time.
+Additionally, the NetworkX object containing then processed CSV file with appropriately formatted station and edge names can be created using the get_network() function:
+```python
+def get_network(): 
+    
+    lines = pd.read_csv(r'../data/londongraphs/processed/london.lines.csv', index_col='line')
+    stations = pd.read_csv(r'../data/londongraphs/processed/london.stations.csv')
+    connections = pd.read_csv(r'../data/londongraphs/processed/london.connections.csv')
+    graph = nx.Graph()
+    for station_id, station in stations.iterrows():
+        graph.add_node(station['name'], lon=round(station['longitude'],4), 
+            lat=round(station['latitude'],4), s_id=station['id'])
 
-Passengers traveling through the network model are assigned the links between their origin-destination according to the shortest path between those nodes, weighed on 'time'. NetworkX's built in shortest path algorithm (Dijkstra) is used: 
+    for connection_id, connection in connections.iterrows():
+        station1_name = stations.loc[stations['id'] == connection['station1'],'name'].item()
+        station2_name = stations.loc[stations['id'] == connection['station2'],'name'].item()
+        graph.add_edge(station1_name, station2_name, time = connection['time'], 
+            line = lines.loc[connection['line'], 'name'])
+        
+    return graph
+```
+
+Lastly, The pickle libarary is used to save and load load in the Pickle directory, since certain calculations can take a long time.
+
+As for the scripts file: Passengers traveling through the network model are assigned the links between their origin-destination according to the shortest path between those nodes, weighed on 'time'. NetworkX's built in shortest path algorithm (Dijkstra) is used: 
 
 ```python 
 def create_shortest_paths(graph, OD):
@@ -181,7 +202,7 @@ def fixCapacity(bgraph, depth):
     return
 ```
 
-In the file 01- intial pickled models, the shortest paths are calculated and trip assignment is performed. In my actual research, I ended up uploading part of the code to AWS in order to let it run overnight, as the calculations were quite heavy. The code run on AWS is as follows: 
+In the notebook file 01- intial pickled models, the shortest paths are calculated and trip assignment is performed. In my actual research, I ended up uploading part of the code to AWS in order to let it run overnight, as the calculations were quite heavy. The code run on AWS is as follows: 
 
 ```python
 import os.path
