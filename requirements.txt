@@ -1,0 +1,20 @@
+# This file may be used to create an environment using:
+# $ conda create --name <env> --file <this file>
+# platform: win-64
+importlib-metadata=1.6.0=py37hc8dfbb8_0
+importlib_metadata=1.6.0=0
+ipykernel=5.2.0=py37h5ca1d4c_1
+ipython=7.13.0=py37hc8dfbb8_2
+ipython_genutils=0.2.0=py_1
+jupyter_client=6.1.2=py_0
+jupyter_core=4.6.3=py37hc8dfbb8_1
+jupyterlab=2.0.1=py_0
+jupyterlab_server=1.1.0=py_0
+matplotlib=3.2.0=1
+matplotlib-base=3.2.0=py37h2981e6d_1
+numpy=1.18.1=py37h90d3380_1
+networkx==2.4
+pandas=1.0.3=py37h47e9c7a_0
+pickleshare=0.7.5=py37hc8dfbb8_1001
+plotly=4.7.1=py_0
+python=3.7.4=h5263a28_0
