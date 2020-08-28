@@ -15,8 +15,7 @@ The motivation behind this study is to explore the importance of disruption time
 - [Data](#data)
 - [Scripts](#Scripts)
 - [Modelling](#modelling)
-- [Results](#Results)
-- [Closing](#closing)
+- [Analysis](#analysis)
 
 ## Data
 For this research, we used passenger data from TFL (Transport For London) in order to estimate
