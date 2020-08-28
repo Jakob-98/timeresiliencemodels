@@ -278,11 +278,29 @@ for edge in list(graph.edges()):
     
 networkdf.to_excel('networkgraph.xlsx')    
 ```
-This grabs the relevant data from the basegraph and creates an excelsheet which can be merged with the metrics' excel sheets in order to plot the data spatially using tableau. 
+This grabs the relevant data from the basegraph and creates an excelsheet which can be merged with the metrics' excel sheets in order to plot the data spatially using tableau. More on this in https://github.com/Jakob-98/howtonetworkxtotableau (WIP)
 
-### This section is TODO. 
+Lastly, we want to grab the relevant information from the created NetworkX graphs and put them into a dataframe. There are multiple ways of doing so, my approach was quite simple to create a multiindexed dataframe for each of the 8 timeslots. These are examples of some of the metric dataframes I created:
 
-## Results
-### This section is TODO. 
+```python
+caputildfs = {}
+for timeslot in scr.timeslots:
+    pasdf = pd.DataFrame(index=graph.edges())
+    caputil = pd.DataFrame(index=graph.edges())
+    pcol = pd.Series(nx.get_edge_attributes(basepassenger.get(timeslot), 'passengers'))    
+    capcol = pd.Series(nx.get_edge_attributes(basepassenger.get(timeslot), 'capacity')) 
+    pasdf['base'] = pcol
+    for edge in graph.edges():
+        n1graphs = fl.load_obj(",".join(edge), 'n1graphs/') #load disrupted graphs
+        pas = pd.Series(nx.get_edge_attributes(n1graphs.get(timeslot), 'passengers'))    
+        diffdf[edge] = (pas - pcol)/capcol
+        pasdf[edge] = pas
+        caputil[edge] = pas / capcol
+        caputildfs.update([(timeslot, caputil.T)])
+caputildfs = pd.concat(caputildfs, axis=1)
+```
+After merging the dataframes, there were added to an excel sheet to be further analysed in Tableau.
+
+Arguably, a faster method is to compute the passenger data using the shortest path dictionary and immediatly create a dataframe from it. This would skip a step, but my approach worked fine for the purpose of the reasearch project.
 
 
